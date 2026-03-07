@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { api, errorSchemas } from "@shared/routes";
+import { api, errorSchemas, auth } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth } from "./replit_integrations/auth";
 import { registerAuthRoutes } from "./replit_integrations/auth/routes";
+import { loginUser, registerUser } from "./replit_integrations/auth/local-auth";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -13,6 +14,45 @@ export async function registerRoutes(
   // Set up authentication
   await setupAuth(app);
   registerAuthRoutes(app);
+
+  // Local auth endpoints
+  app.post(auth.register.path, async (req, res) => {
+    try {
+      const input = auth.register.input.parse(req.body);
+      const user = await registerUser(input.email, input.password, input.firstName, input.lastName, input.userType);
+      
+      // Set session
+      req.login({ id: user.id, email: user.email, userType: user.userType, firstName: user.firstName, lastName: user.lastName }, (err) => {
+        if (err) return res.status(500).json({ message: "خطأ في الجلسة" });
+        res.status(201).json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, userType: user.userType });
+      });
+    } catch (err: any) {
+      res.status(400).json({ message: err.message || "خطأ في التسجيل" });
+    }
+  });
+
+  app.post(auth.login.path, async (req, res) => {
+    try {
+      const input = auth.login.input.parse(req.body);
+      const user = await loginUser(input.email, input.password);
+      
+      // Set session
+      req.login({ id: user.id, email: user.email, userType: user.userType, firstName: user.firstName, lastName: user.lastName }, (err) => {
+        if (err) return res.status(500).json({ message: "خطأ في الجلسة" });
+        res.status(200).json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, userType: user.userType });
+      });
+    } catch (err: any) {
+      res.status(401).json({ message: err.message || "فشل تسجيل الدخول" });
+    }
+  });
+
+  app.get(auth.me.path, (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.json(null);
+    }
+    const user = req.user as any;
+    res.json({ id: user.id || user.claims?.sub, email: user.email || user.claims?.email, firstName: user.firstName, lastName: user.lastName, userType: user.userType });
+  });
 
   app.get(api.products.list.path, async (req, res) => {
     try {

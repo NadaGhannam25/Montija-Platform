@@ -1,19 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useCart } from "@/store/cart";
 import { useCreateOrder } from "@/hooks/use-orders";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthLocal } from "@/hooks/use-auth-local";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, CreditCard, Banknote, MapPin, PackageOpen } from "lucide-react";
+import { CheckCircle2, CreditCard, Banknote, MapPin, PackageOpen, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Checkout() {
   const { items, getTotal, clearCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { user, isLoading: authLoading, isAuthenticated } = useAuthLocal();
   const [, setLocation] = useLocation();
   const { mutateAsync: createOrder, isPending } = useCreateOrder();
   const { toast } = useToast();
@@ -22,9 +21,19 @@ export default function Checkout() {
   const [payment, setPayment] = useState("مدى");
   const [isSuccess, setIsSuccess] = useState(false);
 
-  if (!isAuthenticated) {
-    setLocation("/api/login");
-    return null;
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      setLocation("/login");
+    }
+  }, [authLoading, isAuthenticated, setLocation]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-6"></div>
+        <p className="text-muted-foreground">جاري التحميل...</p>
+      </div>
+    );
   }
 
   if (items.length === 0 && !isSuccess) {
@@ -62,25 +71,55 @@ export default function Checkout() {
       return;
     }
 
+    if (!user) {
+      toast({ title: "خطأ", description: "يرجى تسجيل الدخول أولاً", variant: "destructive" });
+      setLocation("/login");
+      return;
+    }
+
     try {
-      // Send the first item's familyId as the order's familyId for simplicity
-      await createOrder({
-        familyId: items[0].product.familyId,
-        items: items.map(i => ({
-          productId: i.product.id,
-          quantity: i.quantity,
-          price: i.product.price
-        })),
-        deliveryAddress: address,
-        paymentMethod: payment,
-        totalAmount: getTotal().toString()
+      // Group items by family and create orders for each
+      const itemsByFamily = new Map<string, typeof items>();
+      items.forEach(item => {
+        const familyId = item.product.familyId;
+        if (!itemsByFamily.has(familyId)) {
+          itemsByFamily.set(familyId, []);
+        }
+        itemsByFamily.get(familyId)?.push(item);
       });
+
+      // Create an order for each family
+      let anySuccess = false;
+      for (const [familyId, familyItems] of itemsByFamily.entries()) {
+        const familyTotal = familyItems.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+        
+        try {
+          await createOrder({
+            familyId,
+            items: familyItems.map(i => ({
+              productId: i.product.id,
+              quantity: i.quantity,
+              price: i.product.price
+            })),
+            deliveryAddress: address,
+            paymentMethod: payment,
+            totalAmount: familyTotal.toString()
+          });
+          anySuccess = true;
+        } catch (err: any) {
+          console.error(`خطأ في إنشاء طلب العائلة ${familyId}:`, err.message);
+        }
+      }
       
-      clearCart();
-      setIsSuccess(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (anySuccess) {
+        clearCart();
+        setIsSuccess(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        toast({ title: "خطأ", description: "فشل إنشاء الطلب", variant: "destructive" });
+      }
     } catch (err: any) {
-      toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
+      toast({ title: "حدث خطأ", description: err.message || "فشل إنشاء الطلب", variant: "destructive" });
     }
   };
 

@@ -18,12 +18,16 @@ import Checkout from "@/pages/Checkout";
 import MyOrders from "@/pages/MyOrders";
 import Dashboard from "@/pages/Dashboard";
 import FAQ from "@/pages/FAQ";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
 
 function Router() {
   return (
     <main className="flex-1 flex flex-col">
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
         <Route path="/product/:id" component={ProductDetails} />
         <Route path="/checkout" component={Checkout} />
         <Route path="/orders" component={MyOrders} />

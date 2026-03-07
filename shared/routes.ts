@@ -122,6 +122,62 @@ export const api = {
   }
 };
 
+export const auth = {
+  register: {
+    method: 'POST' as const,
+    path: '/api/auth/register' as const,
+    input: z.object({
+      email: z.string().email(),
+      password: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      userType: z.enum(["customer", "family"]),
+    }),
+    responses: {
+      201: z.object({
+        id: z.string(),
+        email: z.string(),
+        firstName: z.string().nullable(),
+        lastName: z.string().nullable(),
+        userType: z.string(),
+      }),
+      400: errorSchemas.validation,
+    }
+  },
+  login: {
+    method: 'POST' as const,
+    path: '/api/auth/login' as const,
+    input: z.object({
+      email: z.string().email(),
+      password: z.string(),
+    }),
+    responses: {
+      200: z.object({
+        id: z.string(),
+        email: z.string(),
+        firstName: z.string().nullable(),
+        lastName: z.string().nullable(),
+        userType: z.string(),
+      }),
+      401: errorSchemas.unauthorized,
+    }
+  },
+  me: {
+    method: 'GET' as const,
+    path: '/api/auth/me' as const,
+    responses: {
+      200: z.object({
+        id: z.string(),
+        email: z.string(),
+        firstName: z.string().nullable(),
+        lastName: z.string().nullable(),
+        userType: z.string(),
+      }).nullable(),
+      401: errorSchemas.unauthorized,
+    }
+  }
+};
+
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
   let url = path;
   if (params) {
