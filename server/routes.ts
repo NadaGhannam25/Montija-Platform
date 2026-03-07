@@ -90,12 +90,48 @@ export async function registerRoutes(
     }
   });
 
+  // Logout
+  app.post('/api/auth/logout', (req, res) => {
+    req.logout(() => {
+      res.json({ success: true });
+    });
+  });
+
+  // Reviews
+  app.get('/api/products/:id/reviews', async (req, res) => {
+    try {
+      const reviews = await storage.getReviews(Number(req.params.id));
+      res.json(reviews);
+    } catch (e) {
+      res.status(500).json({ message: "Internal Error" });
+    }
+  });
+
+  app.post('/api/products/:id/reviews', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const user = req.user as any;
+    const userId = user.claims?.sub || user.id;
+    try {
+      const { rating, comment } = req.body;
+      const review = await storage.createReview({
+        productId: Number(req.params.id),
+        userId,
+        rating: Number(rating),
+        comment,
+      });
+      res.status(201).json(review);
+    } catch (e) {
+      res.status(500).json({ message: "Internal Error" });
+    }
+  });
+
   app.get(api.orders.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     const user = req.user as any;
+    const userId = user.claims?.sub || user.id;
     try {
-      const buyerOrders = await storage.getOrders(user.claims.sub, 'customer');
-      const sellerOrders = await storage.getOrders(user.claims.sub, 'family');
+      const buyerOrders = await storage.getOrders(userId, 'customer');
+      const sellerOrders = await storage.getOrders(userId, 'family');
       
       // Combine unique
       const all = [...buyerOrders, ...sellerOrders];
@@ -110,10 +146,11 @@ export async function registerRoutes(
   app.post(api.orders.create.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     const user = req.user as any;
+    const userId = user.claims?.sub || user.id;
     try {
       const input = api.orders.create.input.parse(req.body);
       const order = await storage.createOrder({
-        userId: user.claims.sub,
+        userId,
         familyId: input.familyId,
         totalAmount: input.totalAmount,
         deliveryAddress: input.deliveryAddress,
@@ -121,7 +158,7 @@ export async function registerRoutes(
       }, input.items);
       
       // Try to fetch detailed order back for response
-      const orders = await storage.getOrders(user.claims.sub, 'customer');
+      const orders = await storage.getOrders(userId, 'customer');
       const detailedOrder = orders.find(o => o.id === order.id);
       
       res.status(201).json(detailedOrder || order);
@@ -140,7 +177,6 @@ export async function registerRoutes(
       const input = api.orders.updateStatus.input.parse(req.body);
       await storage.updateOrderStatus(Number(req.params.id), input.status);
       
-      // We should really return the detailed order, but returning success is ok
       res.json({ success: true });
     } catch(err) {
       res.status(500).json({ message: "Internal error" });
@@ -150,8 +186,9 @@ export async function registerRoutes(
   app.get(api.stats.get.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     const user = req.user as any;
+    const userId = user.claims?.sub || user.id;
     try {
-      const sellerOrders = await storage.getOrders(user.claims.sub, 'family');
+      const sellerOrders = await storage.getOrders(userId, 'family');
       const totalSales = sellerOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
       const orderCount = sellerOrders.length;
       

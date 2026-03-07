@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, Bell, User, Menu, X, LogOut, ChevronDown, Grid3x3 } from "lucide-react";
+import { ShoppingCart, Bell, Menu, LogOut, ChevronDown, Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
 import { useAuthLocal } from "@/hooks/use-auth-local";

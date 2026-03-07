@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { products, orders, orderItems, notifications, type InsertProduct, type InsertOrder, type ProductWithFamily, type OrderWithDetails } from "@shared/schema";
+import { products, orders, orderItems, notifications, reviews, type InsertProduct, type InsertOrder, type InsertReview, type ProductWithFamily, type OrderWithDetails } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { eq, desc, and } from "drizzle-orm";
 
@@ -97,6 +97,30 @@ export class DatabaseStorage {
   async updateOrderStatus(id: number, status: string) {
     const [updated] = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
     return updated;
+  }
+
+  async getReviews(productId: number) {
+    const results = await db.select({
+      review: reviews,
+      user: {
+        firstName: users.firstName,
+        lastName: users.lastName,
+      }
+    }).from(reviews)
+      .innerJoin(users, eq(reviews.userId, users.id))
+      .where(eq(reviews.productId, productId))
+      .orderBy(desc(reviews.createdAt));
+    return results.map(r => ({ ...r.review, user: r.user }));
+  }
+
+  async createReview(data: InsertReview) {
+    const [review] = await db.insert(reviews).values(data).returning();
+    const [user] = await db.select({ firstName: users.firstName, lastName: users.lastName }).from(users).where(eq(users.id, data.userId));
+    return { ...review, user };
+  }
+
+  async getNotifications(userId: string) {
+    return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
   }
 }
 

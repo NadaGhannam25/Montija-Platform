@@ -1,19 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { auth } from "@shared/routes";
-import type { LoginInput, RegisterInput } from "@shared/auth-schema";
-import { z } from "zod";
 
-type AuthUser = z.infer<typeof auth.me.responses[200]>;
+type AuthUser = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  userType: string;
+};
 
-async function fetchCurrentUser(): Promise<AuthUser> {
-  const res = await fetch(auth.me.path, { credentials: "include" });
-  if (!res.ok) throw new Error("Not authenticated");
+async function fetchCurrentUser(): Promise<AuthUser | null> {
+  const res = await fetch('/api/auth/me', { credentials: "include" });
+  if (!res.ok) return null;
   const data = await res.json();
   return data;
 }
 
-async function loginUser(data: LoginInput) {
-  const res = await fetch(auth.login.path, {
+async function loginUser(data: { email: string; password: string }) {
+  const res = await fetch('/api/auth/login', {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -23,11 +26,11 @@ async function loginUser(data: LoginInput) {
     const error = await res.json();
     throw new Error(error.message || "خطأ في تسجيل الدخول");
   }
-  return res.json();
+  return res.json() as Promise<AuthUser>;
 }
 
-async function registerUser(data: Omit<RegisterInput, "confirmPassword">) {
-  const res = await fetch(auth.register.path, {
+async function registerUser(data: { email: string; password: string; firstName: string; lastName: string; userType: string }) {
+  const res = await fetch('/api/auth/register', {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -37,23 +40,28 @@ async function registerUser(data: Omit<RegisterInput, "confirmPassword">) {
     const error = await res.json();
     throw new Error(error.message || "خطأ في التسجيل");
   }
-  return res.json();
+  return res.json() as Promise<AuthUser>;
+}
+
+async function logoutUser() {
+  await fetch('/api/auth/logout', { method: "POST", credentials: "include" });
 }
 
 export function useAuthLocal() {
   const queryClient = useQueryClient();
-  
-  const { data: user, isLoading } = useQuery<AuthUser>({
+
+  const { data: user, isLoading } = useQuery<AuthUser | null>({
     queryKey: ["auth/me"],
     queryFn: fetchCurrentUser,
     retry: false,
-    staleTime: Infinity,
+    staleTime: 5 * 60 * 1000,
   });
 
   const loginMutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
       queryClient.setQueryData(["auth/me"], data);
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
     },
   });
 
@@ -64,12 +72,21 @@ export function useAuthLocal() {
     },
   });
 
+  const logoutMutation = useMutation({
+    mutationFn: logoutUser,
+    onSuccess: () => {
+      queryClient.setQueryData(["auth/me"], null);
+      queryClient.clear();
+    },
+  });
+
   return {
-    user,
+    user: user ?? null,
     isLoading,
     isAuthenticated: !!user,
     login: loginMutation.mutate,
     register: registerMutation.mutate,
+    logout: logoutMutation.mutate,
     isLoggingIn: loginMutation.isPending,
     isRegistering: registerMutation.isPending,
     loginError: loginMutation.error?.message,

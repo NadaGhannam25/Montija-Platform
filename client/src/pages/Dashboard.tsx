@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthLocal } from "@/hooks/use-auth-local";
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/hooks/use-products";
 import { useOrders, useUpdateOrderStatus } from "@/hooks/use-orders";
 import { useQuery } from "@tanstack/react-query";
@@ -29,7 +29,7 @@ const CHART_DATA = [
 ];
 
 export default function Dashboard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuthLocal();
   const { data: products } = useProducts();
   const { data: orders } = useOrders();
   const { mutateAsync: createProduct } = useCreateProduct();
@@ -46,7 +46,18 @@ export default function Dashboard() {
     defaultValues: { familyId: user?.id || "" }
   });
 
-  if (!isAuthenticated) return <div className="p-20 text-center text-xl font-bold">يرجى تسجيل الدخول.</div>;
+  if (authLoading) return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+    </div>
+  );
+
+  if (!isAuthenticated) return (
+    <div className="p-20 text-center">
+      <p className="text-xl font-bold mb-4">يرجى تسجيل الدخول أولاً</p>
+      <a href="/login" className="text-primary underline">تسجيل الدخول</a>
+    </div>
+  );
 
   // Filter data for this family
   const myProducts = products?.filter(p => p.familyId === user?.id) || [];
@@ -131,6 +142,8 @@ export default function Dashboard() {
                     <option value="موالح">موالح</option>
                     <option value="هدايا">هدايا</option>
                     <option value="عطور">عطور</option>
+                    <option value="مخبوزات">مخبوزات</option>
+                    <option value="منتجات يدوية">منتجات يدوية</option>
                   </select>
                 </div>
               </div>

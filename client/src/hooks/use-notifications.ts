@@ -6,10 +6,11 @@ export function useNotifications() {
     queryKey: [api.notifications.list.path],
     queryFn: async () => {
       const res = await fetch(api.notifications.list.path, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch notifications");
+      if (!res.ok) return [];
       return api.notifications.list.responses[200].parse(await res.json());
     },
-    refetchInterval: 30000, // Poll every 30s
+    refetchInterval: 30000,
+    retry: false,
   });
 }
 

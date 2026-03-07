@@ -1,16 +1,91 @@
 import { useParams, Link } from "wouter";
 import { useProduct } from "@/hooks/use-products";
 import { useCart } from "@/store/cart";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthLocal } from "@/hooks/use-auth-local";
 import { Button } from "@/components/ui/button";
-import { Star, Minus, Plus, ShoppingCart, ArrowRight, ShieldCheck, Truck, PackageOpen } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Star, Minus, Plus, ShoppingCart, ArrowRight, ShieldCheck, Truck, PackageOpen, UserCircle2, Send } from "lucide-react";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { arSA } from "date-fns/locale";
+
+type Review = {
+  id: number;
+  productId: number;
+  userId: string;
+  rating: number;
+  comment: string;
+  createdAt: string | null;
+  user: { firstName: string | null; lastName: string | null };
+};
+
+function StarRating({ value, onChange }: { value: number; onChange?: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1,2,3,4,5].map(star => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange?.(star)}
+          onMouseEnter={() => onChange && setHovered(star)}
+          onMouseLeave={() => onChange && setHovered(0)}
+          className={onChange ? "cursor-pointer" : "cursor-default"}
+          disabled={!onChange}
+        >
+          <Star className={`w-5 h-5 transition-colors ${
+            star <= (hovered || value) ? "fill-orange-400 text-orange-400" : "text-muted-foreground/30"
+          }`} />
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
   const { data: product, isLoading, error } = useProduct(Number(id));
   const { addItem } = useCart();
+  const { user, isAuthenticated } = useAuthLocal();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState("");
+
+  const { data: reviews = [], isLoading: reviewsLoading } = useQuery<Review[]>({
+    queryKey: [`/api/products/${id}/reviews`],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/${id}/reviews`);
+      return res.json();
+    },
+    enabled: !!id,
+  });
+
+  const submitReview = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/products/${id}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ rating: newRating, comment: newComment }),
+      });
+      if (!res.ok) throw new Error("فشل إرسال التقييم");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${id}/reviews`] });
+      setNewComment("");
+      setNewRating(5);
+      toast({ title: "شكراً!", description: "تم إرسال تقييمك بنجاح." });
+    },
+    onError: () => {
+      toast({ title: "خطأ", description: "تعذّر إرسال التقييم.", variant: "destructive" });
+    }
+  });
 
   if (isLoading) {
     return (
@@ -40,9 +115,9 @@ export default function ProductDetails() {
     );
   }
 
-  const handleAddToCart = () => {
-    addItem(product, quantity);
-  };
+  const avgRating = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : product.rating;
 
   return (
     <div className="min-h-screen pb-20">
@@ -53,10 +128,11 @@ export default function ProductDetails() {
           العودة للتسوق
         </Link>
 
-        <div className="bg-card rounded-3xl shadow-sm border border-border/50 overflow-hidden">
+        {/* Product Card */}
+        <div className="bg-card rounded-3xl shadow-sm border border-border/50 overflow-hidden mb-12">
           <div className="grid md:grid-cols-2 gap-0">
-            {/* Image Gallery */}
-            <div className="aspect-square md:aspect-auto bg-muted relative">
+            {/* Image */}
+            <div className="aspect-square md:aspect-auto bg-muted relative min-h-[320px]">
               <img 
                 src={product.imageUrl} 
                 alt={product.name}
@@ -64,7 +140,8 @@ export default function ProductDetails() {
               />
               <div className="absolute top-6 start-6 bg-background/90 backdrop-blur-md px-4 py-2 rounded-full font-bold text-foreground flex items-center gap-2 shadow-lg">
                 <Star className="w-5 h-5 fill-orange-400 text-orange-400" />
-                {product.rating} <span className="text-muted-foreground font-normal text-sm">({product.salesCount} تقييم)</span>
+                {avgRating}
+                <span className="text-muted-foreground font-normal text-sm">({reviews.length || product.salesCount} تقييم)</span>
               </div>
             </div>
 
@@ -86,9 +163,7 @@ export default function ProductDetails() {
                 </div>
               </div>
 
-              <div className="prose prose-neutral dark:prose-invert mb-10 text-muted-foreground text-lg leading-relaxed">
-                <p>{product.description}</p>
-              </div>
+              <p className="text-muted-foreground text-lg leading-relaxed mb-10">{product.description}</p>
 
               <div className="mb-10 flex flex-wrap items-center justify-between gap-6">
                 <div>
@@ -99,11 +174,11 @@ export default function ProductDetails() {
                 </div>
                 
                 <div className="flex items-center gap-4 bg-muted p-2 rounded-2xl border border-border/50 shadow-inner">
-                  <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl bg-background shadow-sm hover:bg-background/80" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
+                  <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl bg-background shadow-sm" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
                     <Minus className="w-5 h-5" />
                   </Button>
                   <span className="text-2xl font-black w-10 text-center">{quantity}</span>
-                  <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl bg-background shadow-sm hover:bg-background/80" onClick={() => setQuantity(quantity + 1)}>
+                  <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl bg-background shadow-sm" onClick={() => setQuantity(quantity + 1)}>
                     <Plus className="w-5 h-5" />
                   </Button>
                 </div>
@@ -112,13 +187,13 @@ export default function ProductDetails() {
               <Button 
                 size="lg" 
                 className="w-full h-16 text-xl font-bold rounded-2xl shadow-xl shadow-primary/25 hover:-translate-y-1 transition-all gap-3 group"
-                onClick={handleAddToCart}
+                onClick={() => { addItem(product, quantity); toast({ title: "تمت الإضافة!", description: `${product.name} في سلتك.` }); }}
+                data-testid="button-add-to-cart"
               >
                 <ShoppingCart className="w-6 h-6 group-hover:scale-110 transition-transform" />
                 إضافة إلى السلة
               </Button>
 
-              {/* Trust badges */}
               <div className="grid grid-cols-2 gap-4 mt-10">
                 <div className="flex items-center gap-3 p-4 rounded-2xl bg-secondary/30">
                   <ShieldCheck className="w-8 h-8 text-primary" />
@@ -135,10 +210,96 @@ export default function ProductDetails() {
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <div className="bg-card rounded-3xl border border-border/50 shadow-sm overflow-hidden">
+          <div className="p-8 border-b border-border/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-black mb-1">تقييمات العملاء</h2>
+                <p className="text-muted-foreground">{reviews.length} تقييم</p>
+              </div>
+              {reviews.length > 0 && (
+                <div className="text-center">
+                  <p className="text-5xl font-black text-primary">{avgRating}</p>
+                  <StarRating value={Math.round(Number(avgRating))} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="divide-y divide-border/50">
+            {reviewsLoading ? (
+              <div className="p-8 space-y-6">
+                {[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="p-12 text-center text-muted-foreground">
+                <Star className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
+                <p className="font-semibold text-lg">لا توجد تقييمات بعد</p>
+                <p className="text-sm mt-1">كن أول من يقيّم هذا المنتج!</p>
+              </div>
+            ) : reviews.map(review => (
+              <div key={review.id} className="p-6 hover:bg-muted/20 transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    {review.user.firstName?.[0] || <UserCircle2 className="w-6 h-6" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <p className="font-bold">{review.user.firstName} {review.user.lastName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {review.createdAt ? format(new Date(review.createdAt), "dd MMM yyyy", { locale: arSA }) : ''}
+                      </p>
+                    </div>
+                    <StarRating value={review.rating} />
+                    <p className="mt-3 text-muted-foreground leading-relaxed">{review.comment}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Write a review */}
+          <div className="p-8 bg-muted/20 border-t border-border/50">
+            <h3 className="text-xl font-bold mb-6">أضف تقييمك</h3>
+            {isAuthenticated ? (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">تقييمك</p>
+                  <StarRating value={newRating} onChange={setNewRating} />
+                </div>
+                <Textarea
+                  placeholder="شارك تجربتك مع هذا المنتج..."
+                  className="min-h-[100px] rounded-xl resize-none"
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  data-testid="input-review-comment"
+                />
+                <Button
+                  onClick={() => submitReview.mutate()}
+                  disabled={!newComment.trim() || submitReview.isPending}
+                  className="gap-2"
+                  data-testid="button-submit-review"
+                >
+                  <Send className="w-4 h-4" />
+                  {submitReview.isPending ? "جاري الإرسال..." : "إرسال التقييم"}
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground mb-4">يجب تسجيل الدخول لإضافة تقييم</p>
+                <Button asChild variant="outline">
+                  <Link href="/login">تسجيل الدخول</Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );
