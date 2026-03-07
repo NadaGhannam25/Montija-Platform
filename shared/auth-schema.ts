@@ -11,6 +11,7 @@ export const registerSchema = z.object({
   confirmPassword: z.string(),
   firstName: z.string().min(2, "الاسم الأول يجب أن يكون حرفين على الأقل"),
   lastName: z.string().min(2, "اسم العائلة يجب أن يكون حرفين على الأقل"),
+  phone: z.string().min(9, "رقم الجوال يجب أن يكون 9 أرقام على الأقل").regex(/^[0-9+\s()-]+$/, "رقم الجوال غير صحيح"),
   userType: z.enum(["customer", "family"], { errorMap: () => ({ message: "اختر نوع الحساب" }) }),
 }).refine(data => data.password === data.confirmPassword, {
   message: "كلمات المرور غير متطابقة",

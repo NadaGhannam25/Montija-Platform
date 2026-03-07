@@ -91,7 +91,8 @@ export default function Checkout() {
       // Create an order for each family
       let anySuccess = false;
       for (const [familyId, familyItems] of itemsByFamily.entries()) {
-        const familyTotal = familyItems.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+        const familySubtotal = familyItems.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+        const familyTotal = familySubtotal + 15; // includes delivery fee
         
         try {
           await createOrder({

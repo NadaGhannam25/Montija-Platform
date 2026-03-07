@@ -19,7 +19,7 @@ export async function registerRoutes(
   app.post(auth.register.path, async (req, res) => {
     try {
       const input = auth.register.input.parse(req.body);
-      const user = await registerUser(input.email, input.password, input.firstName, input.lastName, input.userType);
+      const user = await registerUser(input.email, input.password, input.firstName, input.lastName, input.userType, input.phone);
       
       // Set session
       req.login({ id: user.id, email: user.email, userType: user.userType, firstName: user.firstName, lastName: user.lastName }, (err) => {
@@ -120,6 +120,17 @@ export async function registerRoutes(
         comment,
       });
       res.status(201).json(review);
+    } catch (e) {
+      res.status(500).json({ message: "Internal Error" });
+    }
+  });
+
+  app.get('/api/orders/:id', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      const order = await storage.getOrder(Number(req.params.id));
+      if (!order) return res.status(404).json({ message: "Not found" });
+      res.json(order);
     } catch (e) {
       res.status(500).json({ message: "Internal Error" });
     }

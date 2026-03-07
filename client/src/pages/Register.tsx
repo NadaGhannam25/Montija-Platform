@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthLocal } from "@/hooks/use-auth-local";
-import { Mail, Lock, User, Users, UserCheck } from "lucide-react";
+import { Mail, Lock, User, Users, UserCheck, Phone } from "lucide-react";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -24,6 +24,7 @@ export default function Register() {
       confirmPassword: "",
       firstName: "",
       lastName: "",
+      phone: "",
       userType: "customer",
     },
   });
@@ -135,6 +136,31 @@ export default function Register() {
                         placeholder="your@email.com" 
                         type="email"
                         className="pr-12 h-11 rounded-xl"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Phone */}
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>رقم الجوال</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Phone className="absolute right-4 top-3.5 w-5 h-5 text-muted-foreground" />
+                      <Input 
+                        placeholder="05XXXXXXXX" 
+                        type="tel"
+                        dir="ltr"
+                        className="pr-12 h-11 rounded-xl"
+                        data-testid="input-phone"
                         {...field}
                       />
                     </div>

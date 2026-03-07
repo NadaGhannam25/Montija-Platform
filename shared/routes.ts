@@ -131,6 +131,7 @@ export const auth = {
       password: z.string(),
       firstName: z.string(),
       lastName: z.string(),
+      phone: z.string().optional(),
       userType: z.enum(["customer", "family"]),
     }),
     responses: {

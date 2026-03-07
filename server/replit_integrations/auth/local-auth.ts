@@ -18,7 +18,7 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
   return key === hashBuffer.toString("hex");
 }
 
-export async function registerUser(email: string, password: string, firstName: string, lastName: string, userType: "customer" | "family") {
+export async function registerUser(email: string, password: string, firstName: string, lastName: string, userType: "customer" | "family", phone?: string) {
   const existingUser = await db.select().from(users).where(eq(users.email, email));
   if (existingUser.length > 0) {
     throw new Error("البريد الإلكتروني مسجل بالفعل");
@@ -31,6 +31,7 @@ export async function registerUser(email: string, password: string, firstName: s
     firstName,
     lastName,
     userType,
+    phone,
   }).returning();
 
   return user;

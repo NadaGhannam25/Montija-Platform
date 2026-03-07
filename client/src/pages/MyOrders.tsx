@@ -69,7 +69,7 @@ export default function MyOrders() {
             const StatusIcon = cfg.icon;
 
             return (
-              <div key={order.id} className="bg-card border border-border/50 shadow-sm rounded-3xl overflow-hidden hover:shadow-md transition-shadow">
+              <div key={order.id} className="bg-card border border-border/50 shadow-sm rounded-3xl overflow-hidden hover:shadow-md transition-shadow" data-testid={`card-order-${order.id}`}>
                 {/* Header */}
                 <div className="bg-muted/30 px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-border/50">
                   <div className="flex items-center gap-4">
@@ -91,6 +91,12 @@ export default function MyOrders() {
                       {status}
                     </span>
                     <p className="font-black text-xl text-primary">{Number(order.totalAmount).toFixed(2)} ر.س</p>
+                    <Button asChild variant="outline" size="sm" className="rounded-xl hidden sm:flex gap-1" data-testid={`button-order-details-${order.id}`}>
+                      <Link href={`/orders/${order.id}`}>
+                        <ChevronRight className="w-4 h-4" />
+                        تفاصيل
+                      </Link>
+                    </Button>
                   </div>
                 </div>
 

@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   userType: text("user_type", { enum: ["customer", "family"] }).default("customer"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
+  phone: varchar("phone"),
   profileImageUrl: varchar("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

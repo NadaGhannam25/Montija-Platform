@@ -94,6 +94,23 @@ export class DatabaseStorage {
     });
   }
 
+  async getOrder(id: number) {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    if (!order) return undefined;
+    const items = await db.select({
+      orderItem: orderItems,
+      product: products
+    }).from(orderItems)
+      .innerJoin(products, eq(orderItems.productId, products.id))
+      .where(eq(orderItems.orderId, order.id));
+    const [user] = await db.select().from(users).where(eq(users.id, order.userId));
+    return {
+      ...order,
+      items: items.map(i => ({ ...i.orderItem, product: i.product })),
+      user: { firstName: user?.firstName || null, lastName: user?.lastName || null }
+    };
+  }
+
   async updateOrderStatus(id: number, status: string) {
     const [updated] = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
     return updated;

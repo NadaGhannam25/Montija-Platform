@@ -20,6 +20,7 @@ import Dashboard from "@/pages/Dashboard";
 import FAQ from "@/pages/FAQ";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import OrderDetails from "@/pages/OrderDetails";
 
 function Router() {
   return (
@@ -31,6 +32,7 @@ function Router() {
         <Route path="/product/:id" component={ProductDetails} />
         <Route path="/checkout" component={Checkout} />
         <Route path="/orders" component={MyOrders} />
+        <Route path="/orders/:id" component={OrderDetails} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/faq" component={FAQ} />
         <Route component={NotFound} />
