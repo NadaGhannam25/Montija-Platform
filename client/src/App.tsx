@@ -3,8 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 // Components
 import { Header } from "@/components/layout/Header";
@@ -42,14 +42,9 @@ function Router() {
 }
 
 function App() {
-  // Enforce RTL layout for Arabic
-  useEffect(() => {
-    document.documentElement.dir = "rtl";
-    document.documentElement.lang = "ar";
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
       <TooltipProvider>
         <div className="min-h-screen flex flex-col bg-background text-foreground">
           <Header />
@@ -59,6 +54,7 @@ function App() {
           <Toaster />
         </div>
       </TooltipProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

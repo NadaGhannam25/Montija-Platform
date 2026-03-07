@@ -3,10 +3,12 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function CartDrawer() {
   const { items, isOpen, setIsOpen, updateQuantity, removeItem, getTotal } = useCart();
   const [, setLocation] = useLocation();
+  const { t } = useLanguage();
 
   const handleCheckout = () => {
     setIsOpen(false);
@@ -19,7 +21,7 @@ export function CartDrawer() {
         <SheetHeader className="border-b pb-4">
           <SheetTitle className="text-start flex items-center gap-2 text-2xl font-bold">
             <ShoppingBag className="w-6 h-6 text-primary" />
-            السلة
+            {t.cart.title}
           </SheetTitle>
         </SheetHeader>
 
@@ -27,8 +29,8 @@ export function CartDrawer() {
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
               <ShoppingBag className="w-16 h-16 opacity-20" />
-              <p className="text-lg font-medium">السلة فارغة</p>
-              <Button variant="outline" onClick={() => setIsOpen(false)}>تصفح المنتجات</Button>
+              <p className="text-lg font-medium">{t.cart.empty}</p>
+              <Button variant="outline" onClick={() => setIsOpen(false)}>{t.cart.browse}</Button>
             </div>
           ) : (
             items.map((item) => (
@@ -39,7 +41,7 @@ export function CartDrawer() {
                 <div className="flex-1 flex flex-col justify-between py-1">
                   <div>
                     <h4 className="font-semibold text-foreground line-clamp-1">{item.product.name}</h4>
-                    <p className="text-primary font-bold mt-1">{item.product.price} ر.س</p>
+                    <p className="text-primary font-bold mt-1">{item.product.price} {t.cart.currency}</p>
                   </div>
                   
                   <div className="flex items-center justify-between mt-2">
@@ -65,11 +67,15 @@ export function CartDrawer() {
         {items.length > 0 && (
           <div className="border-t pt-6 pb-2 space-y-4">
             <div className="flex items-center justify-between text-lg font-bold">
-              <span>الإجمالي:</span>
-              <span className="text-primary text-2xl">{getTotal().toFixed(2)} ر.س</span>
+              <span>{t.cart.total}</span>
+              <span className="text-primary text-2xl">{getTotal().toFixed(2)} {t.cart.currency}</span>
             </div>
-            <Button className="w-full h-14 text-lg rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all hover:-translate-y-1" onClick={handleCheckout}>
-              إتمام الطلب
+            <Button
+              className="w-full h-14 text-lg rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all hover:-translate-y-1"
+              onClick={handleCheckout}
+              data-testid="button-cart-checkout"
+            >
+              {t.cart.checkout}
             </Button>
           </div>
         )}

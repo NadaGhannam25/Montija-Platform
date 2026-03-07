@@ -1,0 +1,18 @@
+I want to update and improve my e-commerce website called “Montija”, a platform designed to support local family businesses and productive families by allowing them to sell and display their products online professionally. The website must include a complete user authentication system. Create a Sign Up page with the following fields: Full Name, Email Address, Phone Number, Password, and Confirm Password. Also create a Login page that allows users to sign in securely. After logging in, users should be able to view their orders and continue shopping.
+
+Fix the product images and product names on the website carefully. The flower bouquet image is currently unclear, so replace it with a clear high-quality flower bouquet image. The product that shows cookies currently has the wrong label written as “Maamoul”, so change the product name to “Cookies” to match the image. The product that was previously called grape leaves should now be renamed to “Chicken Soup” so the name matches the displayed item. The Maamoul date product image is not showing, so remove it and replace the product with a new item called “Cashew Pancakes” with an appropriate image that loads correctly.
+
+In the top navigation bar, where there are currently Home and FAQ, add a new button called “Categories”. When the user clicks it, it should open a page or dropdown that displays many product categories such as Desserts, Baked Goods, Home Food, Perfumes, Gifts, Handmade Products, and more. Each category should contain multiple products with images, names, prices, and an Add to Cart button.
+
+Add a Customer Reviews section on the homepage that shows realistic user experiences from people who purchased from different stores on the platform. Each review should include a name, star rating, and a short realistic comment describing their experience with the product or store.
+
+Create additional functional pages including:
+• Order Details Page showing the products selected, quantity of each item, price per product, and the total order cost.
+• My Orders Page where users can see their current orders and previous orders.
+• Payment Details Page that shows the payment methods and a summary of the order before confirming payment.
+
+Currently the Order button and Payment button are not visible, so fix this issue and ensure the Add to Cart, Order, and Checkout/Payment buttons appear clearly and are clickable.
+
+Also add a Language Switch feature to the website. Place a language toggle button in the navigation bar that allows users to switch between Arabic and English. When the language changes, all interface elements such as menus, product names, descriptions, buttons, and system messages should switch to the selected language.
+
+The overall design should be modern, clean, responsive, and easy to navigate, with clear product cards, organized categories, high-quality images, and a professional shopping experience.

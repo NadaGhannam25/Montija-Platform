@@ -12,9 +12,10 @@ Key features:
 - **Family seller dashboard** with product CRUD and sales analytics charts
 - **Notifications system** with unread badge counter
 - **FAQ page** with accordion UI and a rule-based chatbot
-- **RTL layout** throughout (Arabic UI, `dir="rtl"`)
+- **Bilingual AR/EN toggle** — full RTL Arabic / LTR English switching with `LanguageContext`, stored in `localStorage` key `muntija-lang`; translations in `client/src/i18n/translations.ts`
+- **RTL layout** default (Arabic UI, `dir="rtl"`); LTR in English mode
 - **Customer reviews** system with per-product ratings and comments; seeded reviews; write-review form for logged-in users
-- **Customer testimonials** section on home page (static)
+- **Customer testimonials** section on home page (static, bilingual)
 - **Local auth** (email/password, scrypt hashing) with user types: `customer` | `family`; separate Login and Register pages
 - **Categories dropdown** in navbar that filters products by category
 
@@ -53,7 +54,8 @@ Code is shared between client and server via the `shared/` directory, accessible
 - **Charts**: Recharts for seller dashboard analytics
 - **Forms**: React Hook Form + Zod resolvers
 - **Fonts**: Tajawal (Arabic-optimized Google Font)
-- **RTL**: Enforced globally via `document.documentElement.dir = "rtl"` in `App.tsx`; Tailwind logical properties used (`start`, `end`, `ps`, `pe`, etc.)
+- **i18n / Bilingual**: `LanguageContext` + `useLanguage()` hook from `client/src/contexts/LanguageContext.tsx`; translation strings in `client/src/i18n/translations.ts`; language toggle button in Header; all pages use `t.*` for display text; direction auto-applied via `document.documentElement.dir`
+- **RTL/LTR**: Dynamically toggled by `LanguageContext`; Tailwind logical properties used (`start`, `end`, `ps`, `pe`, etc.)
 
 **Pages:**
 | Route | Component | Purpose |
