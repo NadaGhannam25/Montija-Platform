@@ -1,8 +1,8 @@
-import { Link } from "wouter";
-import { ShoppingCart, Bell, User, Menu, X, LogOut, ChevronDown } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { ShoppingCart, Bell, User, Menu, X, LogOut, ChevronDown, Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthLocal } from "@/hooks/use-auth-local";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useState } from "react";
 import {
@@ -15,10 +15,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
+const categories = ["حلويات", "موالح", "هدايا", "عطور", "مخبوزات", "منتجات يدوية"];
+
 export function Header() {
   const { getItemCount, setIsOpen } = useCart();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuthLocal();
   const { data: notifications } = useNotifications();
+  const [, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const unreadCount = notifications?.filter(n => !n.isRead).length || 0;
@@ -38,6 +41,24 @@ export function Header() {
           
           <nav className="hidden md:flex items-center gap-6 font-medium text-muted-foreground">
             <Link href="/" className="hover:text-primary transition-colors">الرئيسية</Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="gap-2 p-0 h-auto hover:text-primary text-muted-foreground font-medium">
+                  <Grid3x3 className="w-4 h-4" />
+                  التصنيفات
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                {categories.map(cat => (
+                  <DropdownMenuItem key={cat} asChild>
+                    <button onClick={() => setLocation(`/?category=${encodeURIComponent(cat)}`)} className="w-full text-right">
+                      {cat}
+                    </button>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Link href="/faq" className="hover:text-primary transition-colors">الأسئلة الشائعة</Link>
             {isAuthenticated && (
               <Link href="/orders" className="hover:text-primary transition-colors">طلباتي</Link>
@@ -120,7 +141,7 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <Button asChild className="hidden sm:flex rounded-full px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all hover:-translate-y-0.5">
-              <Link href="/api/login">تسجيل الدخول</Link>
+              <Link href="/login">تسجيل الدخول</Link>
             </Button>
           )}
 
@@ -148,7 +169,7 @@ export function Header() {
                   </>
                 ) : (
                   <Button asChild className="mt-4 w-full">
-                    <Link href="/api/login">تسجيل الدخول</Link>
+                    <Link href="/login">تسجيل الدخول</Link>
                   </Button>
                 )}
               </div>
