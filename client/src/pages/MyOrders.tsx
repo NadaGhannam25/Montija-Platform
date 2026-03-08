@@ -2,7 +2,10 @@ import { useOrders } from "@/hooks/use-orders";
 import { useAuthLocal } from "@/hooks/use-auth-local";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link, useLocation } from "wouter";
-import { Package, Clock, Truck, CheckCircle2, ShoppingBag, ChevronRight, MapPin, CreditCard } from "lucide-react";
+import {
+  Package, Clock, Truck, CheckCircle2,
+  ShoppingBag, ChevronRight, MapPin, CreditCard, CalendarDays, Hash,
+} from "lucide-react";
 import { format } from "date-fns";
 import { arSA, enUS } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -12,11 +15,13 @@ import { useEffect } from "react";
 
 const STATUS_STEPS_AR = ["قيد المعالجة", "قيد التحضير", "خرج للتوصيل", "تم التسليم"];
 
-const STATUS_CONFIG: Record<string, { icon: any; gradient: string; light: string; text: string }> = {
-  "قيد المعالجة": { icon: Clock,         gradient: "from-slate-400 to-slate-500",   light: "bg-slate-50 border-slate-200 text-slate-700",     text: "text-slate-600" },
-  "قيد التحضير":  { icon: Package,       gradient: "from-amber-400 to-orange-500",  light: "bg-amber-50 border-amber-200 text-amber-700",     text: "text-amber-600" },
-  "خرج للتوصيل": { icon: Truck,          gradient: "from-blue-400 to-blue-600",     light: "bg-blue-50 border-blue-200 text-blue-700",        text: "text-blue-600" },
-  "تم التسليم":  { icon: CheckCircle2,  gradient: "from-emerald-400 to-green-600",  light: "bg-emerald-50 border-emerald-200 text-emerald-700", text: "text-emerald-600" },
+type StatusKey = "قيد المعالجة" | "قيد التحضير" | "خرج للتوصيل" | "تم التسليم";
+
+const STATUS_CONFIG: Record<StatusKey, { icon: any; badge: string }> = {
+  "قيد المعالجة": { icon: Clock,        badge: "bg-muted text-muted-foreground border-border/60" },
+  "قيد التحضير":  { icon: Package,      badge: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800" },
+  "خرج للتوصيل": { icon: Truck,         badge: "bg-primary/10 text-primary border-primary/25" },
+  "تم التسليم":  { icon: CheckCircle2,  badge: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800" },
 };
 
 export default function MyOrders() {
@@ -24,6 +29,8 @@ export default function MyOrders() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuthLocal();
   const [, setLocation] = useLocation();
   const { t, lang } = useLanguage();
+  const isAr = lang === "ar";
+  const dateLocale = lang === "ar" ? arSA : enUS;
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) setLocation("/login");
@@ -38,23 +45,21 @@ export default function MyOrders() {
   }
 
   const userOrders = orders?.filter(o => o.userId === user?.id) || [];
-  const dateLocale = lang === "ar" ? arSA : enUS;
-  const isAr = lang === "ar";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-screen">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 min-h-screen">
 
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-10">
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-black">{t.orders.title}</h1>
+          <h1 className="text-3xl font-black tracking-tight">{t.orders.title}</h1>
           {!isLoading && (
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {userOrders.length} {isAr ? "طلب" : "orders"}
             </p>
           )}
         </div>
-        <Button asChild variant="outline" className="gap-2 rounded-xl hidden sm:flex">
+        <Button asChild variant="outline" size="sm" className="gap-2 rounded-xl hidden sm:flex">
           <Link href="/">
             <ShoppingBag className="w-4 h-4" />
             {t.orders.shopMore}
@@ -62,114 +67,135 @@ export default function MyOrders() {
         </Button>
       </div>
 
-      {/* Loading */}
+      {/* ── Loading Skeletons ──────────────────────────────── */}
       {isLoading ? (
-        <div className="space-y-5">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 w-full rounded-3xl" />)}
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-72 w-full rounded-3xl" />)}
         </div>
 
-      /* Empty */
+      /* ── Empty State ───────────────────────────────────── */
       ) : userOrders.length === 0 ? (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center justify-center py-32 bg-card rounded-3xl border border-dashed border-border text-center"
+          className="flex flex-col items-center justify-center py-28 bg-card rounded-3xl border border-dashed border-border text-center"
         >
-          <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
-            <Package className="w-12 h-12 text-muted-foreground/40" />
+          <div className="w-20 h-20 rounded-full bg-primary/8 flex items-center justify-center mb-5">
+            <Package className="w-10 h-10 text-primary/50" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">{t.orders.empty}</h2>
-          <p className="text-muted-foreground mb-8 max-w-xs">{t.orders.emptyDesc}</p>
-          <Button asChild size="lg" className="rounded-xl">
+          <h2 className="text-xl font-bold mb-2">{t.orders.empty}</h2>
+          <p className="text-sm text-muted-foreground mb-7 max-w-xs">{t.orders.emptyDesc}</p>
+          <Button asChild size="sm" className="rounded-xl px-6">
             <Link href="/">{t.orders.startShopping}</Link>
           </Button>
         </motion.div>
 
-      /* Orders List */
+      /* ── Order Cards ───────────────────────────────────── */
       ) : (
         <div className="space-y-5">
-          {userOrders.map((order, idx) => {
-            const status = order.status || "قيد المعالجة";
-            const currentStep = STATUS_STEPS_AR.indexOf(status);
-            const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG["قيد المعالجة"];
+          {userOrders.map((order, cardIdx) => {
+            const status = (order.status || "قيد المعالجة") as StatusKey;
+            const stepIdx  = STATUS_STEPS_AR.indexOf(status);
+            const cfg      = STATUS_CONFIG[status] ?? STATUS_CONFIG["قيد المعالجة"];
             const StatusIcon = cfg.icon;
             const statusLabel = t.statuses[status as keyof typeof t.statuses] || status;
-            const isDelivered = status === "تم التسليم";
 
             return (
-              <motion.div
+              <motion.article
                 key={order.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.06 }}
-                className="bg-card rounded-3xl border border-border/60 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                transition={{ delay: cardIdx * 0.06 }}
+                className="bg-card rounded-3xl border border-border/60 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                 data-testid={`card-order-${order.id}`}
               >
-                {/* ─── Top Bar ──────────────────────────────────────────── */}
-                <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-muted/30 border-b border-border/50">
-                  <div className="flex items-center gap-5">
-                    {/* Order # */}
-                    <div>
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{t.orders.orderNumber}</p>
-                      <p className="font-black text-xl leading-none"># {order.id}</p>
+                {/* ── Card Header ──────────────────────────── */}
+                <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 bg-muted/25 border-b border-border/40">
+                  {/* Left: order # and date */}
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <Hash className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold leading-none mb-0.5">
+                          {t.orders.orderNumber}
+                        </p>
+                        <p className="font-black text-lg leading-none">{order.id}</p>
+                      </div>
                     </div>
-                    <div className="h-8 w-px bg-border/70" />
-                    {/* Date */}
-                    <div>
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{t.orders.date}</p>
-                      <p className="font-semibold text-sm">
-                        {order.createdAt ? format(new Date(order.createdAt), "dd MMM yyyy", { locale: dateLocale }) : "—"}
-                      </p>
+                    <div className="h-7 w-px bg-border/60" />
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold leading-none mb-0.5">
+                          {t.orders.date}
+                        </p>
+                        <p className="font-semibold text-sm leading-none">
+                          {order.createdAt ? format(new Date(order.createdAt), "dd MMM yyyy", { locale: dateLocale }) : "—"}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
+                  {/* Right: status badge + total + details */}
                   <div className="flex items-center gap-3 flex-wrap">
-                    {/* Status Badge */}
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${cfg.light}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${cfg.badge}`}>
                       <StatusIcon className="w-3.5 h-3.5" />
                       {statusLabel}
                     </span>
-                    {/* Total */}
-                    <span className="font-black text-xl text-primary">{Number(order.totalAmount).toFixed(2)} <span className="text-sm font-semibold">{t.orders.currency}</span></span>
-                    {/* Details Link */}
-                    <Button asChild variant="outline" size="sm" className="rounded-xl gap-1 hidden sm:flex" data-testid={`button-order-details-${order.id}`}>
+                    <p className="font-black text-lg text-primary whitespace-nowrap">
+                      {Number(order.totalAmount).toFixed(2)}
+                      <span className="text-sm font-semibold ms-1">{t.orders.currency}</span>
+                    </p>
+                    <Button
+                      asChild variant="ghost" size="sm"
+                      className="rounded-xl h-8 px-3 text-xs gap-1 hidden sm:flex border border-border/60 hover:bg-muted"
+                      data-testid={`button-order-details-${order.id}`}
+                    >
                       <Link href={`/orders/${order.id}`}>
                         {t.orders.details}
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </Link>
                     </Button>
                   </div>
                 </div>
 
-                <div className="p-6 md:p-7 space-y-6">
-                  {/* ─── Progress Tracker ─────────────────────────────── */}
-                  <div className="relative pt-1">
-                    {/* Track line */}
-                    <div className="absolute top-5 start-6 end-6 h-1 bg-muted rounded-full" />
+                <div className="px-6 py-5 space-y-5">
+
+                  {/* ── Progress Tracker ─────────────────── */}
+                  <div className="relative py-2">
+                    {/* Track background */}
+                    <div className="absolute top-[22px] start-5 end-5 h-[3px] bg-border/50 rounded-full" />
+                    {/* Active track — always uses primary color */}
                     <div
-                      className={`absolute top-5 start-6 h-1 rounded-full bg-gradient-to-${isAr ? "l" : "r"} ${cfg.gradient} transition-all duration-700`}
-                      style={{ width: `calc(${(currentStep / (STATUS_STEPS_AR.length - 1)) * 100}% - 3rem)` }}
+                      className="absolute top-[22px] start-5 h-[3px] rounded-full bg-primary transition-all duration-700"
+                      style={{
+                        width: stepIdx === 0
+                          ? "0%"
+                          : `calc(${(stepIdx / (STATUS_STEPS_AR.length - 1)) * 100}% - 2.5rem)`,
+                      }}
                     />
                     <div className="relative flex justify-between">
-                      {STATUS_STEPS_AR.map((step, idx) => {
-                        const done = idx <= currentStep;
-                        const active = idx === currentStep;
-                        const StepIcon = STATUS_CONFIG[step]?.icon || Clock;
+                      {STATUS_STEPS_AR.map((step, si) => {
+                        const done   = si < stepIdx;
+                        const active = si === stepIdx;
+                        const future = si > stepIdx;
+                        const StepIcon = STATUS_CONFIG[step as StatusKey]?.icon || Clock;
                         const stepLabel = t.statuses[step as keyof typeof t.statuses] || step;
                         return (
                           <div key={step} className="flex flex-col items-center gap-2 w-1/4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center border-4 z-10 transition-all duration-500 ${
-                              active
-                                ? `bg-gradient-to-br ${cfg.gradient} border-white text-white scale-110 shadow-lg`
-                                : done
-                                  ? "bg-primary border-primary text-primary-foreground"
-                                  : "bg-card border-muted text-muted-foreground"
-                            }`}>
+                            <div className={`
+                              w-11 h-11 rounded-full flex items-center justify-center border-[3px] z-10
+                              transition-all duration-500
+                              ${active ? "bg-primary border-primary/20 text-primary-foreground scale-110 shadow-md shadow-primary/25"
+                                : done  ? "bg-primary border-primary text-primary-foreground"
+                                        : "bg-card border-border/60 text-muted-foreground/50"}
+                            `}>
                               <StepIcon className="w-4 h-4" />
                             </div>
-                            <span className={`text-[11px] font-semibold text-center leading-tight max-w-[60px] ${
-                              active ? cfg.text : done ? "text-foreground" : "text-muted-foreground"
-                            }`}>
+                            <span className={`
+                              text-[10px] font-semibold text-center leading-snug max-w-[56px]
+                              ${active ? "text-primary" : done ? "text-foreground" : "text-muted-foreground/60"}
+                            `}>
                               {stepLabel}
                             </span>
                           </div>
@@ -178,57 +204,85 @@ export default function MyOrders() {
                     </div>
                   </div>
 
-                  {/* ─── Items ────────────────────────────────────────── */}
+                  {/* ── Product Items ────────────────────── */}
                   <div>
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3">{t.orders.products}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+                      {t.orders.products}
+                    </p>
                     <div className="space-y-2">
                       {order.items?.map(item => (
-                        <div key={item.id} className="flex items-center gap-4 p-3 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-muted flex-shrink-0 border border-border/40">
-                            <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-3 p-3 rounded-2xl bg-muted/20 border border-border/30"
+                        >
+                          {/* Thumbnail */}
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/40">
+                            <img
+                              src={item.product.imageUrl}
+                              alt={item.product.name}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
+
+                          {/* Name & qty */}
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-sm truncate">{item.product.name}</p>
+                            <p className="font-semibold text-sm leading-tight truncate">{item.product.name}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              {t.orders.quantity} <span className="font-semibold">{item.quantity}</span>
+                              {t.orders.quantity}
+                              <span className="font-bold text-foreground ms-1">{item.quantity}</span>
                             </p>
                           </div>
+
+                          {/* Line total */}
                           <div className="text-end shrink-0">
-                            <p className="font-black text-primary">{(Number(item.price) * item.quantity).toFixed(2)}</p>
-                            <p className="text-[11px] text-muted-foreground">{t.orders.currency}</p>
+                            <p className="font-bold text-sm text-primary">
+                              {(Number(item.price) * item.quantity).toFixed(2)}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">{t.orders.currency}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* ─── Footer Info ──────────────────────────────────── */}
-                  <div className="grid sm:grid-cols-2 gap-3 pt-1">
-                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-muted/20 border border-border/40">
-                      <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  {/* ── Delivery & Payment ───────────────── */}
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-muted/20 border border-border/30">
+                      <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                       <div className="min-w-0">
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{t.orders.deliveryAddress}</p>
-                        <p className="text-sm font-medium leading-snug truncate">{order.deliveryAddress}</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                          {t.orders.deliveryAddress}
+                        </p>
+                        <p className="text-xs font-medium leading-relaxed line-clamp-2">
+                          {order.deliveryAddress}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-muted/20 border border-border/40">
-                      <CreditCard className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-muted/20 border border-border/30">
+                      <CreditCard className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{t.orders.paymentMethod}</p>
-                        <p className="text-sm font-medium">{order.paymentMethod}</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                          {t.orders.paymentMethod}
+                        </p>
+                        <p className="text-xs font-medium">{order.paymentMethod}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Mobile details button */}
-                  <Button asChild variant="outline" size="sm" className="sm:hidden w-full rounded-xl gap-1" data-testid={`button-order-details-mobile-${order.id}`}>
+                  <Button
+                    asChild variant="outline" size="sm"
+                    className="sm:hidden w-full rounded-xl gap-1 h-9"
+                    data-testid={`button-order-details-mobile-${order.id}`}
+                  >
                     <Link href={`/orders/${order.id}`}>
                       {t.orders.details}
                       <ChevronRight className="w-4 h-4" />
                     </Link>
                   </Button>
+
                 </div>
-              </motion.div>
+              </motion.article>
             );
           })}
         </div>
