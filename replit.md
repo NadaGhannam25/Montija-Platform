@@ -13,6 +13,9 @@ Key features:
 - **Notifications system** with unread badge counter
 - **FAQ page** with accordion UI and a rule-based chatbot
 - **Bilingual AR/EN toggle** — full RTL Arabic / LTR English switching with `LanguageContext`, stored in `localStorage` key `muntija-lang`; translations in `client/src/i18n/translations.ts`
+- **About Us page** (`/about`) — Platform story (SDAIA Prompt Engineering Bootcamp), developer profiles for Nada Almutairi & Latifah Alomair
+- **Footer** — Brand, quick links, categories, "Made with love for you" + copyright
+- **Profile dropdown** — avatar button opens menu with Profile, My Orders, and Logout (each with icon + subtitle)
 - **RTL layout** default (Arabic UI, `dir="rtl"`); LTR in English mode
 - **Customer reviews** system with per-product ratings and comments; seeded reviews; write-review form for logged-in users
 - **Customer testimonials** section on home page (static, bilingual)

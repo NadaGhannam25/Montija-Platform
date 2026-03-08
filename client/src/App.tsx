@@ -10,6 +10,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Header } from "@/components/layout/Header";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { Chatbot } from "@/components/layout/Chatbot";
+import { Footer } from "@/components/layout/Footer";
 
 // Pages
 import Home from "@/pages/Home";
@@ -21,6 +22,7 @@ import FAQ from "@/pages/FAQ";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import OrderDetails from "@/pages/OrderDetails";
+import About from "@/pages/About";
 
 function Router() {
   return (
@@ -35,6 +37,7 @@ function Router() {
         <Route path="/orders/:id" component={OrderDetails} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/faq" component={FAQ} />
+        <Route path="/about" component={About} />
         <Route component={NotFound} />
       </Switch>
     </main>
@@ -45,15 +48,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-      <TooltipProvider>
-        <div className="min-h-screen flex flex-col bg-background text-foreground">
-          <Header />
-          <Router />
-          <CartDrawer />
-          <Chatbot />
-          <Toaster />
-        </div>
-      </TooltipProvider>
+        <TooltipProvider>
+          <div className="min-h-screen flex flex-col bg-background text-foreground">
+            <Header />
+            <Router />
+            <Footer />
+            <CartDrawer />
+            <Chatbot />
+            <Toaster />
+          </div>
+        </TooltipProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );
