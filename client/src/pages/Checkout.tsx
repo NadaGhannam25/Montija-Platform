@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, CreditCard, Banknote, MapPin, PackageOpen, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import NoticeBanner from "@/components/layout/NoticeBanner";
 
 export default function Checkout() {
   const { items, getTotal, clearCart } = useCart();
@@ -129,7 +130,9 @@ export default function Checkout() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <>
+      <NoticeBanner />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-4xl font-black mb-10 text-foreground">{t.checkout.title}</h1>
       
       <div className="grid lg:grid-cols-3 gap-10">
@@ -226,5 +229,6 @@ export default function Checkout() {
 
       </div>
     </div>
+    </>
   );
 }

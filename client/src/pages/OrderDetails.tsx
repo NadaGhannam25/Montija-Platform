@@ -9,6 +9,7 @@ import { Package, Clock, Truck, CheckCircle2, ArrowRight, MapPin, CreditCard, Sh
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { OrderWithDetails } from "@shared/schema";
+import NoticeBanner from "@/components/layout/NoticeBanner";
 
 const STATUS_STEPS_AR = ["قيد المعالجة", "قيد التحضير", "خرج للتوصيل", "تم التسليم"];
 
@@ -67,7 +68,9 @@ export default function OrderDetails() {
   const delivery = 15;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 min-h-screen space-y-6">
+    <>
+      <NoticeBanner />
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 min-h-screen space-y-6">
       {/* Back */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => setLocation("/orders")} className="gap-2 text-muted-foreground" data-testid="button-back-orders">
@@ -218,5 +221,6 @@ export default function OrderDetails() {
         <Link href="/orders">{t.orderDetails.backToOrders}</Link>
       </Button>
     </div>
+    </>
   );
 }
